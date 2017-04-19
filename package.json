@@ -1,0 +1,46 @@
+{
+  "name": "simple-page-loader",
+  "version": "0.0.1",
+  "description": "Page loader",
+  "main": "dist/index.js",
+  "bin": {
+    "page-loader": "dist/bin/page-loader.js"
+  },
+  "scripts": {
+    "test": "jest",
+    "babel-node": "babel-node",
+    "eslint": "eslint",
+    "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
+    "prepublish": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/viprogramm/project-lvl3-s71.git"
+  },
+  "author": "Vitaliy Ti",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/viprogramm/project-lvl3-s71/issues"
+  },
+  "homepage": "https://github.com/viprogramm/project-lvl3-s71#readme",
+  "devDependencies": {
+    "babel-cli": "^6.24.0",
+    "babel-core": "*",
+    "babel-eslint": "*",
+    "babel-preset-env": "*",
+    "babel-preset-flow": "^6.23.0",
+    "babel-preset-stage-0": "*",
+    "eslint": "*",
+    "eslint-config-airbnb-base": "*",
+    "eslint-plugin-import": "*",
+    "jest": "^19.0.2",
+    "nock": "^9.0.13",
+    "rimraf": "^2.6.1"
+  },
+  "dependencies": {
+    "axios": "^0.16.1",
+    "commander": "^2.9.0",
+    "lodash": "^4.17.4",
+    "mz": "^2.6.0"
+  }
+}
