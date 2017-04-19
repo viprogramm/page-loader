@@ -14,7 +14,7 @@ program
         console.log(`File was saved to ${filePath}`);
       })
       .catch((error) => {
-        throw error;
+        console.error(error.toString());
       });
   })
   .parse(process.argv);

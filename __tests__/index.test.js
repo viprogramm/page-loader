@@ -1,26 +1,24 @@
-import axios from 'axios';
-import httpAdapter from 'axios/lib/adapters/http';
+import os from 'os';
 import nock from 'nock';
 import fs from 'mz/fs';
-import rimraf from 'rimraf';
 
+import getHttpClient from '../src/lib/httpClient';
 import pageLoader from '../src';
 
+const http = getHttpClient('http');
+const tmpDir = os.tmpdir();
 const host = 'http://localhost';
-axios.defaults.host = host;
-axios.defaults.adapter = httpAdapter;
-
-const tmpDir = fs.mkdtempSync('/tmp/pageloader');
-const text = fs.readFileSync(`${__dirname}/fixtures/index.html`, 'utf8');
 
 beforeEach(() => {
+  const text = fs.readFileSync(`${__dirname}/fixtures/index.html`, 'utf8');
+
   nock(host)
     .get('/test')
     .reply(200, text);
 });
 
-test('that file was created', (done) => {
-  pageLoader(`${host}/test`, tmpDir)
+test.only('that file was created', (done) => {
+  pageLoader(`${host}/test`, tmpDir, http)
     .then((file) => {
       expect(fs.existsSync(file)).toBeTruthy();
       done();
@@ -28,16 +26,8 @@ test('that file was created', (done) => {
 });
 
 test('that page doesn\'t exist', (done) => {
-  pageLoader(`${host}/not-exist-test-page`, tmpDir)
+  pageLoader(`${host}/not-exist-test-page`, tmpDir, http)
     .catch(() => {
       done();
     });
-});
-
-afterAll(() => {
-  rimraf(tmpDir, (error) => {
-    if (error) {
-      throw error;
-    }
-  });
 });
