@@ -3,3 +3,11 @@ node_js:
   - stable
 
 script: make lint test
+
+addons:
+  code_climate:
+    repo_token: 781816b43be6e204d6159ddc155ae6ea8001fab54e473376d4146b34ec209190
+
+after_success:
+  - npm install -g codeclimate-test-reporter
+  - codeclimate-test-reporter < lcov.info
