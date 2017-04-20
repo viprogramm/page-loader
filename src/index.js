@@ -14,8 +14,10 @@ export default (pageUrl, outputFolder = './', http = getHttpClient()) => {
   const filePath = path.resolve(outputFolder, fileName);
 
   return http.get(pageUrl)
-    .then((response) => {
-      fs.writeFileSync(filePath, response.data, 'utf8');
-      return filePath;
-    });
+    .then(response =>
+      fs.writeFile(filePath, response.data, 'utf8')
+        .then(() =>
+          filePath,
+        ),
+    );
 };

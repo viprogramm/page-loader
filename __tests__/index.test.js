@@ -17,17 +17,19 @@ beforeEach(() => {
     .reply(200, text);
 });
 
-test.only('that file was created', (done) => {
+test('that file was created', (done) => {
   pageLoader(`${host}/test`, tmpDir, http)
     .then((file) => {
       expect(fs.existsSync(file)).toBeTruthy();
       done();
-    });
+    })
+    .catch(done.fail);
 });
 
 test('that page doesn\'t exist', (done) => {
   pageLoader(`${host}/not-exist-test-page`, tmpDir, http)
     .catch(() => {
       done();
-    });
+    })
+    .then(done.fail);
 });
