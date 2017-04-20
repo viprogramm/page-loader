@@ -15,7 +15,7 @@ export default (pageUrl, outputFolder = './', http = getHttpClient()) => {
 
   return http.get(pageUrl)
     .then(response =>
-      fs.writeFile(filePath, response.data, 'utf8')
+      fs.writeFile(filePath, response.data, 'utf8'),
     )
     .then(() =>
       filePath,
