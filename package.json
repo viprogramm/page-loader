@@ -38,8 +38,14 @@
   },
   "dependencies": {
     "axios": "^0.16.1",
+    "cheerio": "^0.22.0",
     "commander": "^2.9.0",
     "lodash": "^4.17.4",
     "mz": "^2.6.0"
+  },
+  "jest": {
+    "testPathIgnorePatterns": [
+      "/__tests__/fixtures/"
+    ]
   }
 }
