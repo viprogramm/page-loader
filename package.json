@@ -34,7 +34,8 @@
     "eslint-config-airbnb-base": "*",
     "eslint-plugin-import": "*",
     "jest": "^19.0.2",
-    "nock": "^9.0.13"
+    "nock": "^9.0.13",
+    "rimraf": "^2.6.1"
   },
   "dependencies": {
     "axios": "^0.16.1",

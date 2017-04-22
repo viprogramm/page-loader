@@ -57,10 +57,21 @@ const downloadAssets = (httpClient, assetsMap) =>
       url: urlPath,
       responseType: 'stream',
     })
-      .then((response) => {
-        log(`save asset from ${urlPath} to ${savePath}`);
-        return response.data.pipe(fs.createWriteStream(savePath));
-      });
+      .catch((err) => {
+        // Not reject to continue load other assets
+        throw new Error(`${err.message} with asset on url ${urlPath}`);
+      })
+      .then(response =>
+        new Promise((resolve, reject) => {
+          const stream = fs.createWriteStream(savePath);
+          stream.on('error', reject);
+          stream.on('finish', () => {
+            log(`downloaded asset from ${urlPath} to ${savePath}`);
+            resolve(savePath);
+          });
+          response.data.pipe(stream);
+        }),
+      );
   }));
 
 export default (pageUrl, outputFolder = './', httpClient = getHttpClient()) => {
@@ -70,6 +81,9 @@ export default (pageUrl, outputFolder = './', httpClient = getHttpClient()) => {
   const assetsFolderPath = path.resolve(outputFolder, assetsFolderName);
 
   return httpClient.get(pageUrl)
+    .catch(err =>
+      Promise.reject(new Error(`${err.message} with url ${pageUrl}`)),
+    )
     .then(response =>
       createAssetsFolder(assetsFolderPath)
         .then(() => response.data),
