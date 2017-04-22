@@ -2,7 +2,7 @@ install:
 	npm install
 
 start:
-	npm run babel-node -- ./src/bin/page-loader.js --output /var/tmp https://en.hexlet.io/courses
+	DEBUG="page-loader" npm run babel-node -- ./src/bin/page-loader.js --output /var/tmp https://en.hexlet.io/courses
 
 publish: test lint
 	npm publish
@@ -15,4 +15,4 @@ lint:
 	npm run eslint
 
 test:
-	npm test
+	DEBUG="page-loader" npm test

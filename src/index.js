@@ -1,9 +1,12 @@
 import url from 'url';
 import path from 'path';
 import fs from 'mz/fs';
+import debug from 'debug';
 
 import getHttpClient from './lib/httpClient';
 import { getLocalAssets, replaceAssetsPath } from './lib/domNode';
+
+const log = debug('page-loader');
 
 const generateNameByPath = (pageUrl) => {
   const { host, path: urlPath } = url.parse(pageUrl);
@@ -23,15 +26,16 @@ const getSite = (pageUrl) => {
   return `${protocol}//${host}`;
 };
 
-const createAssetsFolder = folder =>
-  fs.exists(folder)
+const createAssetsFolder = (folder) => {
+  log('create asset folder', folder);
+  return fs.exists(folder)
     .then((isExist) => {
       if (!isExist) {
         return fs.mkdir(folder);
       }
       return isExist;
     });
-
+};
 
 const createAssetsMap = (html, pageUrl, saveFolder) => {
   const siteUrl = getSite(pageUrl);
@@ -53,9 +57,10 @@ const downloadAssets = (httpClient, assetsMap) =>
       url: urlPath,
       responseType: 'stream',
     })
-      .then(response =>
-        response.data.pipe(fs.createWriteStream(savePath)),
-      );
+      .then((response) => {
+        log(`save asset from ${urlPath} to ${savePath}`);
+        return response.data.pipe(fs.createWriteStream(savePath));
+      });
   }));
 
 export default (pageUrl, outputFolder = './', httpClient = getHttpClient()) => {
@@ -74,9 +79,10 @@ export default (pageUrl, outputFolder = './', httpClient = getHttpClient()) => {
       return downloadAssets(httpClient, assetsMap)
         .then(() => replaceAssetsPath(data, assetsMap));
     })
-    .then(data =>
-      fs.writeFile(htmlFilePath, data, 'utf8'),
-    )
+    .then((data) => {
+      log(`save page to ${htmlFilePath}`);
+      return fs.writeFile(htmlFilePath, data, 'utf8');
+    })
     .then(() =>
       htmlFilePath,
     );

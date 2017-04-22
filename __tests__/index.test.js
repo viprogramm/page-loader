@@ -37,8 +37,8 @@ test('that file was created', (done) => {
 
 test('that page doesn\'t exist', (done) => {
   pageLoader(`${host}/not-exist-test-page`, tmpDir, http)
+    .then(done.fail)
     .catch(() => {
       done();
-    })
-    .then(done.fail);
+    });
 });
