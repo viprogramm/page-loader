@@ -7,6 +7,9 @@ start:
 debug:
 	DEBUG="page-loader" npm run babel-node -- ./src/bin/page-loader.js --output /var/tmp https://en.hexlet.io/courses
 
+link:
+	npm link
+
 publish: test lint
 	npm publish
 

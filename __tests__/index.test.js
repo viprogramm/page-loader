@@ -4,12 +4,14 @@ import fs from 'mz/fs';
 import path from 'path';
 import rimraf from 'rimraf';
 
-import getHttpClient from '../src/lib/httpClient';
 import pageLoader from '../src';
 
-const http = getHttpClient('http');
-const tmpDir = fs.mkdtempSync(`${os.tmpdir()}/`);
+let tmpDir;
 const host = 'http://localhost';
+
+beforeAll(() => {
+  tmpDir = fs.mkdtempSync(`${os.tmpdir()}/`);
+});
 
 beforeEach(() => {
   const files = [
@@ -41,16 +43,17 @@ beforeEach(() => {
 });
 
 test('page was created', (done) => {
-  pageLoader(`${host}/index.html`, tmpDir, http)
-    .then((file) => {
-      expect(fs.existsSync(file)).toBeTruthy();
-      done();
+  pageLoader(`${host}/index.html`, tmpDir)
+    .then((files) => {
+      Promise.all(files.map(file => fs.exists(file).then(resp => expect(resp).toBeTruthy())))
+        .then(done)
+        .catch(done.fail);
     })
     .catch(done.fail);
 });
 
 test('page doesn\'t found', (done) => {
-  pageLoader(`${host}/page-404`, tmpDir, http)
+  pageLoader(`${host}/page-404`, tmpDir)
     .catch((err) => {
       expect(err.message).toBe('Request failed with status code 404 with url http://localhost/page-404');
       done();
@@ -58,7 +61,7 @@ test('page doesn\'t found', (done) => {
 });
 
 test('couldn\'t download asset', (done) => {
-  pageLoader(`${host}/corrupted-index.html`, tmpDir, http)
+  pageLoader(`${host}/corrupted-index.html`, tmpDir)
     .catch((err) => {
       expect(err.message).toBe('Request failed with status code 404 with asset on url http://localhost/assets/not-exist-main.js');
       done();
@@ -66,7 +69,7 @@ test('couldn\'t download asset', (done) => {
 });
 
 test('trying save to not exist directory', (done) => {
-  pageLoader(`${host}/index.html`, `${tmpDir}/not_exist_folder`, http)
+  pageLoader(`${host}/index.html`, `${tmpDir}/not_exist_folder`)
     .catch((err) => {
       expect(err.message).toBe(`ENOENT: no such file or directory, mkdir '${tmpDir}/not_exist_folder/localhost-index-html_files'`);
       done();
@@ -75,7 +78,7 @@ test('trying save to not exist directory', (done) => {
 
 test('couldn\'t create local assets folder', (done) => {
   fs.chmodSync(tmpDir, '0555');
-  pageLoader(`${host}/temp.html`, tmpDir, http)
+  pageLoader(`${host}/temp.html`, tmpDir)
     .catch((err) => {
       expect(err.message).toBe(`EACCES: permission denied, mkdir '${tmpDir}/localhost-temp-html_files'`);
       done();

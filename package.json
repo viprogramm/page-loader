@@ -1,6 +1,6 @@
 {
   "name": "simple-page-loader",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Page loader",
   "main": "dist/index.js",
   "bin": {
@@ -42,6 +42,7 @@
     "cheerio": "^0.22.0",
     "commander": "^2.9.0",
     "debug": "^2.6.4",
+    "listr": "^0.11.0",
     "lodash": "^4.17.4",
     "mz": "^2.6.0"
   },
