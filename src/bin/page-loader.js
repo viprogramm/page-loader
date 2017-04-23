@@ -25,7 +25,7 @@ program
   .action((pageUrl, options) => {
     new Listr([
       {
-        title: 'Download page',
+        title: 'Download files',
         task: (ctx, task) =>
           pageLoader(pageUrl, options.output, listrTask)
             .then((links) => {
