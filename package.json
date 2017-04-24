@@ -49,6 +49,7 @@
   "jest": {
     "testPathIgnorePatterns": [
       "/__tests__/fixtures/"
-    ]
+    ],
+    "collectCoverage": true
   }
 }
