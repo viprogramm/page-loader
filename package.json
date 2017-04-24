@@ -7,7 +7,7 @@
     "page-loader": "dist/bin/page-loader.js"
   },
   "scripts": {
-    "test": "jest --coverage",
+    "test": "jest",
     "babel-node": "babel-node",
     "eslint": "eslint src __tests__",
     "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
@@ -17,7 +17,8 @@
     "testPathIgnorePatterns": [
       "node_modules",
       "/__tests__/fixtures/"
-    ]
+    ],
+    "collectCoverage": true
   },
   "repository": {
     "type": "git",
