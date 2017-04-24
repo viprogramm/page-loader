@@ -6,17 +6,16 @@ import rimraf from 'rimraf';
 
 import pageLoader from '../src';
 
-let tmpDir;
 const host = 'http://localhost';
+
+let tmpDir;
 
 beforeAll(() => {
   tmpDir = fs.mkdtempSync(`${os.tmpdir()}/`);
-});
 
-beforeEach(() => {
   const files = [
     '/index.html',
-    '/corrupted-index.html',
+    '/corrupted.html',
     '/assets/image.png',
     '/assets/main.js',
     '/assets/main.css',
@@ -32,46 +31,52 @@ beforeEach(() => {
   nock(host)
     .get('/temp.html')
     .reply(200, 'Hello world');
-
-  nock(host)
-    .get('/page-404')
-    .reply(404, 'Not Found');
-
-  nock(host)
-    .get('/assets/not-exist-main.js')
-    .reply(404, 'Not Found');
 });
 
-test('page was created', (done) => {
+test('load page with assets', (done) => {
   pageLoader(`${host}/index.html`, tmpDir)
-    .then((files) => {
-      Promise.all(files.map(file => fs.exists(file).then(resp => expect(resp).toBeTruthy())))
+    .then(([page, assets]) =>
+      Promise.all(assets.map(asset =>
+        asset.load
+          .then(() =>
+            fs.exists(asset.file).then(resp => expect(resp).toBeTruthy()),
+          ),
+      ))
+        .then(() => fs.exists(page).then(resp => expect(resp).toBeTruthy()))
         .then(done)
-        .catch(done.fail);
-    })
+        .catch(done.fail),
+    )
     .catch(done.fail);
 });
 
 test('page doesn\'t found', (done) => {
   pageLoader(`${host}/page-404`, tmpDir)
+    .then(done.fail)
     .catch((err) => {
-      expect(err.message).toBe('Request failed with status code 404 with url http://localhost/page-404');
+      expect(err.status).toBe(404);
       done();
     });
 });
 
 test('couldn\'t download asset', (done) => {
-  pageLoader(`${host}/corrupted-index.html`, tmpDir)
-    .catch((err) => {
-      expect(err.message).toBe('Request failed with status code 404 with asset on url http://localhost/assets/not-exist-main.js');
-      done();
-    });
+  pageLoader(`${host}/corrupted.html`, tmpDir)
+    .then(([, assets]) =>
+      Promise.all(assets.map(asset =>
+        asset.load,
+      ))
+        .then(done.fail)
+        .catch((err) => {
+          expect(err.status).toBe(404);
+          done();
+        }),
+    );
 });
 
 test('trying save to not exist directory', (done) => {
   pageLoader(`${host}/index.html`, `${tmpDir}/not_exist_folder`)
+    .then(done.fail)
     .catch((err) => {
-      expect(err.message).toBe(`ENOENT: no such file or directory, mkdir '${tmpDir}/not_exist_folder/localhost-index-html_files'`);
+      expect(err.code).toBe('ENOENT');
       done();
     });
 });
@@ -79,8 +84,9 @@ test('trying save to not exist directory', (done) => {
 test('couldn\'t create local assets folder', (done) => {
   fs.chmodSync(tmpDir, '0555');
   pageLoader(`${host}/temp.html`, tmpDir)
+    .then(done.fail)
     .catch((err) => {
-      expect(err.message).toBe(`EACCES: permission denied, mkdir '${tmpDir}/localhost-temp-html_files'`);
+      expect(err.code).toBe('EACCES');
       done();
     });
 });

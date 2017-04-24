@@ -1,4 +1,5 @@
 import cheerio from 'cheerio';
+import path from 'path';
 
 export const getLocalAssets = (data) => {
   const $ = cheerio.load(data);
@@ -16,26 +17,20 @@ export const getLocalAssets = (data) => {
     [
       ...acc,
       ...$(key).map(typesTable[key]),
-    ], []).filter(item => !(item.includes('http://') || item.includes('https://')));
+    ], []);
 };
 
-export const replaceAssetsPath = (data, assetsMap) => {
+export const replaceAssetsPath = (data, folder, generateName = () => {}) => {
   const $ = cheerio.load(data);
 
   const updateSrc = (i, el) => {
     const src = $(el).attr('src');
-
-    if (assetsMap[src]) {
-      $(el).attr('src', assetsMap[src].savePath);
-    }
+    $(el).attr('src', path.join(folder, generateName(src)));
   };
 
   const updateHref = (i, el) => {
     const href = $(el).attr('href');
-
-    if (assetsMap[href]) {
-      $(el).attr('href', assetsMap[href].savePath);
-    }
+    $(el).attr('href', path.join(folder, generateName(href)));
   };
 
   const typesTable = {

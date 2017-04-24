@@ -6,7 +6,10 @@ import debug from 'debug';
 import httpClient from './lib/httpClient';
 import { getLocalAssets, replaceAssetsPath } from './lib/domNode';
 
-const log = debug('page-loader');
+const debugCommon = debug('page-loader:common');
+const debugLoad = debug('page-loader:load');
+const debugSave = debug('page-loader:save');
+const debugError = debug('page-loader:error');
 
 const generateNameByPath = (pageUrl) => {
   const { host, path: urlPath } = url.parse(pageUrl);
@@ -14,27 +17,12 @@ const generateNameByPath = (pageUrl) => {
   return urlPathName.replace(/[^a-zA-Z]/g, '-');
 };
 
-const generateNewName = (name) => {
-  if (name[0] === '/') {
-    return name.slice(1).replace(/\//g, '-');
-  }
-  return name.replace(/\//g, '-');
-};
+const generateName = name =>
+  name.replace(/\//g, '-');
 
 const getSite = (pageUrl) => {
   const { protocol, host } = url.parse(pageUrl);
   return `${protocol}//${host}`;
-};
-
-const createAssetsFolder = (folder) => {
-  log('create asset folder', folder);
-  return fs.exists(folder)
-    .then((isExist) => {
-      if (!isExist) {
-        return fs.mkdir(folder);
-      }
-      return isExist;
-    });
 };
 
 const createAssetsMap = (html, pageUrl, saveFolder) => {
@@ -44,64 +32,54 @@ const createAssetsMap = (html, pageUrl, saveFolder) => {
     ...acc,
     [file]: {
       urlPath: url.resolve(siteUrl, file),
-      savePath: path.resolve(saveFolder, generateNewName(file)),
+      savePath: path.resolve(saveFolder, generateName(file)),
     },
   }), {});
 };
 
-const downloadAssets = (assetsMap, task) =>
-  Promise.all(Object.keys(assetsMap).map((file) => {
+const downloadAssets = assetsMap =>
+  Object.keys(assetsMap).map((file) => {
     const { urlPath, savePath } = assetsMap[file];
-    const downloader = httpClient({
+    const load = httpClient({
       method: 'get',
       url: urlPath,
       responseType: 'stream',
     })
-      .then(response =>
-        new Promise((resolve, reject) => {
-          const stream = fs.createWriteStream(savePath);
-          stream.on('error', reject);
-          stream.on('finish', () => {
-            log(`downloaded asset from ${urlPath} to ${savePath}`);
-            resolve(savePath);
-          });
-          response.data.pipe(stream);
-        }),
-      );
+      .then((response) => {
+        debugLoad(urlPath);
+        response.data.pipe(fs.createWriteStream(savePath));
+      })
+      .then((data) => {
+        debugSave(savePath);
+        return data;
+      })
+      .catch((err) => {
+        debugError(`couldn't save ${savePath} file`);
+        return Promise.reject(err);
+      });
+    return { url: urlPath, file: savePath, load };
+  });
 
-    if (task) {
-      return task(downloader, savePath);
-    }
-
-    return downloader
-      .catch(err =>
-        Promise.reject(new Error(`${err.message} with asset on url ${urlPath}`)),
-      );
-  }));
-
-export default (pageUrl, outputFolder = './', task) => {
+export default (pageUrl, outputFolder = './') => {
   const htmlFileName = `${generateNameByPath(pageUrl)}.html`;
   const assetsFolderName = `${generateNameByPath(pageUrl)}_files`;
   const htmlFilePath = path.resolve(outputFolder, htmlFileName);
   const assetsFolderPath = path.resolve(outputFolder, assetsFolderName);
 
-  return httpClient.get(pageUrl)
-    .catch(err =>
-      Promise.reject(new Error(`${err.message} with url ${pageUrl}`)),
-    )
-    .then(response =>
-      createAssetsFolder(assetsFolderPath)
-        .then(() => response.data),
-    )
-    .then((data) => {
-      log(`save page to ${htmlFilePath}`);
-      const assetsMap = createAssetsMap(data, pageUrl, assetsFolderPath);
-      const replacedData = replaceAssetsPath(data, assetsMap);
-      return fs.writeFile(htmlFilePath, replacedData, 'utf8').then(() => assetsMap);
+  return fs.mkdir(assetsFolderPath)
+    .then(() => debugCommon(`asset folder ${assetsFolderPath} was created`))
+    .then(() => httpClient.get(pageUrl))
+    .then((response) => {
+      const { data } = response;
+      const replacedData = replaceAssetsPath(data, assetsFolderName, generateName);
+      return fs.writeFile(htmlFilePath, replacedData, 'utf8')
+        .then(() => {
+          debugCommon(`page was saved to ${htmlFilePath}`);
+          return data;
+        });
     })
-    .then(assetsMap =>
-      downloadAssets(assetsMap, task).then(downloadedAssests =>
-        [htmlFilePath, ...downloadedAssests],
-      ),
-    );
+    .then((data) => {
+      const assetsMap = createAssetsMap(data, pageUrl, assetsFolderPath);
+      return [htmlFilePath, downloadAssets(assetsMap)];
+    });
 };

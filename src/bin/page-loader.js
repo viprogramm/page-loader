@@ -4,18 +4,18 @@ import program from 'commander';
 import Listr from 'listr';
 import pageLoader from '../';
 
-const listrTask = (downloader, file) =>
+const listrTask = asset =>
   new Listr([
     {
-      title: `Download asset to ${file}`,
+      title: `Download asset ${asset.url}`,
       task: (ctx, task) =>
-        downloader
+        asset.load
           .then((response) => {
-            ctx.resp = response;
+            ctx.response = response;
           })
           .catch(err => task.skip(`Skip: ${err.message}`)),
     },
-  ]).run().then(ctx => ctx.resp);
+  ]).run().then(ctx => ctx.response);
 
 program
   .version('0.0.1')
@@ -23,21 +23,16 @@ program
   .option('--output [folder path]', 'Output folder')
   .arguments('<page_url>')
   .action((pageUrl, options) => {
-    new Listr([
-      {
-        title: 'Download files',
-        task: (ctx, task) =>
-          pageLoader(pageUrl, options.output, listrTask)
-            .then((links) => {
-              const t = task;
-              const page = links[0];
-              t.title = `Page was saved to ${page}`;
-            })
-            .catch((err) => {
-              console.error(err.message);
-              process.exitCode = 1;
-            }),
-      },
-    ]).run();
+    pageLoader(pageUrl, options.output)
+      .then(([page, assets]) =>
+        Promise.all(assets.map(asset =>
+          listrTask(asset),
+        ))
+          .then(() => console.log(`Page was saved to ${page}`)),
+      )
+      .catch((err) => {
+        console.error(err.message);
+        process.exitCode = 1;
+      });
   })
   .parse(process.argv);

@@ -2,10 +2,12 @@ install:
 	npm install
 
 start:
+	rm -rf /var/tmp/*
 	npm run babel-node -- ./src/bin/page-loader.js --output /var/tmp https://en.hexlet.io/courses
 
 debug:
-	DEBUG="page-loader" npm run babel-node -- ./src/bin/page-loader.js --output /var/tmp https://en.hexlet.io/courses
+	rm -rf /var/tmp/*
+	DEBUG="page-loader:*" npm run babel-node -- ./src/bin/page-loader.js --output /var/tmp https://en.hexlet.io/courses
 
 link:
 	npm link
