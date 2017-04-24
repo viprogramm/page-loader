@@ -7,11 +7,17 @@
     "page-loader": "dist/bin/page-loader.js"
   },
   "scripts": {
-    "test": "jest",
+    "test": "jest --coverage",
     "babel-node": "babel-node",
     "eslint": "eslint src __tests__",
     "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
     "prepublish": "npm run build"
+  },
+  "jest": {
+    "testPathIgnorePatterns": [
+      "node_modules",
+      "/__tests__/fixtures/"
+    ]
   },
   "repository": {
     "type": "git",
@@ -45,11 +51,5 @@
     "listr": "^0.11.0",
     "lodash": "^4.17.4",
     "mz": "^2.6.0"
-  },
-  "jest": {
-    "testPathIgnorePatterns": [
-      "/__tests__/fixtures/"
-    ],
-    "collectCoverage": true
   }
 }
